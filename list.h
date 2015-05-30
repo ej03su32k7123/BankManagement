@@ -14,6 +14,7 @@ typedef struct admin
     char *name;
     int balance;
     char *handle; /*經手的員工ID*/
+    struct staff *next;
 
 }admin;
 
