@@ -1,2 +1,13 @@
 # BankManagement
-CSIE 104 project 4
+CSIE 104
+Project 4
+
+
+
+
+
+
+Credit:
+arielmiyabi
+Yun-Yang
+Acaki
