@@ -1,21 +1,23 @@
 #ifndef LIST_H_INCLUDED
 #define LIST_H_INCLUDED
 
-typedef struct staff
+typedef struct stuff
 {
     char *name;
     char *password;
     struct staff *next;
 
-} Staff;
+} Stuff;
 
-typedef struct admin
+typedef struct customer
 {
     char *name;
     int balance;
     char *handle; /*經手的員工ID*/
     struct staff *next;
 
-}Admin;
+}Customer;
+
+
 
 #endif // LIST_H_INCLUDED
