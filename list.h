@@ -16,6 +16,6 @@ typedef struct admin
     char *handle; /*經手的員工ID*/
     struct staff *next;
 
-}admin;
+}Admin;
 
 #endif // LIST_H_INCLUDED
