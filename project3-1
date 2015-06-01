@@ -1,0 +1,427 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct student
+{
+    char id[20];
+    char name[20];
+    int calculus;
+    int program;
+    int discrete;
+    int probability;
+    int total;
+    struct student *next;
+};
+
+struct sutdent *inventory = NULL; /*points to first part*/
+
+struct student* read(int *count)
+{
+    FILE * fp;
+    char line[128];
+    char *token;
+    char *delim= ":\t";
+
+    struct student * first = NULL ;
+    struct student * newstudent = NULL ;
+    struct student * oldstudent = NULL ;
+
+    if((fp=fopen("score.txt","r"))==NULL)
+    {
+        printf("cannot open file\n");
+        exit(1);
+    }
+
+    *count=0;  /* Counts the amount of student */
+    while(!feof(fp))
+    {
+        if(fgets(line,128,fp)!=NULL)
+        {
+            newstudent = malloc(sizeof(struct student));
+            newstudent->next = NULL;
+
+            if (first==NULL)
+            {
+                first = newstudent;
+            }
+            else
+            {
+                oldstudent->next = newstudent;
+            }
+
+            token = strtok(line, delim);
+            while (token != NULL)
+            {
+                token = strtok(NULL, delim);
+                strcpy(newstudent->name, token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                strcpy(newstudent->id , token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                newstudent->calculus = atoi(token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                newstudent->program = atoi(token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                newstudent->discrete = atoi(token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                newstudent->probability = atoi(token);
+
+                token = strtok(NULL, delim);
+                token = strtok(NULL, delim);
+                newstudent->total = atoi(token);
+
+                token = strtok(NULL, delim);
+                (*count)++;
+                oldstudent=newstudent;
+            }
+        }
+    }
+
+    fclose(fp);
+    return first;
+
+}
+
+void list(struct student * first)
+{
+    struct student * student;
+
+    student=first;
+    while(student!=NULL)
+    {
+        printf("Name:%s\tID:%s\tCalculus:%d\tProgram:%d\tDiscrete:%d\tProbability:%d\tTotal:%d\t\n",  student->name, student->id,student->calculus, student->program, student->discrete, student->probability,student->total);
+        student=student->next;
+    }
+
+    return;
+}
+
+struct student* insert(struct student * first)
+{
+    struct student *cur, *prev, *new_node;
+
+    new_node=malloc(sizeof(struct student));
+    if (new_node==NULL)
+    {
+        printf("Database is full.\n");
+        return first;
+    }
+
+    cur=first;
+    prev=NULL;
+
+    printf("name:");
+    gets(new_node->name);
+    printf("id:");
+    gets(new_node->id);
+    new_node->calculus=-1;
+    new_node->program=-1;
+    new_node->discrete=-1;
+    new_node->probability=-1;
+    while(new_node->calculus<0 && new_node->program<0 && new_node->discrete<0 && new_node->probability<0)
+    {
+        printf("calculus:");
+        scanf("%d", &new_node->calculus);
+        printf("program:");
+        scanf("%d", &new_node->program);
+        printf("discrete:");
+        scanf("%d", &new_node->discrete);
+        printf("probability:");
+        scanf("%d", &new_node->probability);
+    }
+    new_node->total=new_node->calculus+new_node->program+new_node->discrete+new_node->probability;
+
+    new_node->next=cur;
+    if (prev==NULL)
+        first=new_node;
+    else
+        prev->next=new_node;
+    return first;
+}
+
+struct student* delete_by_name(struct student * first)
+{
+    struct student *cur, *prev;
+    char name[20];
+    memset(name, '\0', 20);
+    printf("name:");
+    gets(name);
+    for (cur=first, prev=NULL; cur !=NULL && strncmp(cur->name,name,strlen(cur->name))!=0 ; prev=cur, cur=cur->next);
+    if(cur==NULL)
+        return first;
+    if(prev==NULL)
+        first=first->next;
+    else
+        prev->next=cur->next;
+    free(cur);
+    return first;
+}
+
+struct student* delete_by_id(struct student * first)
+{
+    struct student *cur, *prev;
+    char id[10];
+    memset(id, '\0', 10);
+    gets(id);
+    for (cur=first, prev=NULL; cur !=NULL && strncmp(cur->id,id,strlen(cur->id))!=0 ; prev=cur, cur=cur->next);
+    if(cur==NULL)
+        return first;
+    if(prev==NULL)
+        first=first->next;
+    else
+        prev->next=cur->next;
+    free(cur);
+    return first;
+}
+struct student* delete_node(struct student * first)
+{
+    char code;
+    printf("(N)AME or (I)D?");
+    code=getchar();
+    getchar();
+    switch(code)
+    {
+    case 'N':
+        first=delete_by_name(first);
+        break;
+    case 'I':
+        first=delete_by_id(first);
+        break;
+    default:
+        printf("try again\n");
+
+    }
+    return first;
+}
+
+struct student* change_by_name(struct student * first)
+{
+    struct student *cur;
+    char code;
+    char name[20];
+    memset(name, '\0', 20);
+    printf("name:");
+    gets(name);
+    for (cur=first; cur !=NULL && strncmp(cur->name,name,strlen(cur->name))!=0 ; cur=cur->next);
+    if(cur==NULL)
+        return first;
+    else
+    {
+        printf("(A)ID\n(B)Calculus\n(C)Program\n(D)Discrete\n(E)Probability\n");
+        code=getchar();
+        if (code=='A')
+            scanf("%s", cur->id);
+        else if (code=='B')
+            scanf("%d", &cur->calculus);
+        else if (code=='C')
+            scanf("%d", &cur->program);
+        else if (code=='D')
+            scanf("%d", &cur->discrete);
+        else if (code=='E')
+            scanf("%d", &cur->probability);
+        else
+            printf("wrong code!");
+        cur->total=cur->calculus+cur->discrete+cur->probability+cur->program;
+
+    }
+    return first;
+}
+
+struct student* change_by_id(struct student * first)
+{
+    struct student *cur;
+    char code;
+    char id[10];
+    memset(id, '\0', 10);
+    printf("id:");
+    gets(id);
+    for (cur=first; cur !=NULL && strncmp(cur->id,id,strlen(cur->id))!=0 ; cur=cur->next);
+    if(cur==NULL)
+        return first;
+    else
+    {
+        printf("(A)Name\n(B)Calculus\n(C)Program\n(D)Discrete\n(E)Probability\n");
+        code=getchar();
+        if (code=='A')
+            scanf("%s", cur->name);
+        else if (code=='B')
+            scanf("%d", &cur->calculus);
+        else if (code=='C')
+            scanf("%d", &cur->program);
+        else if (code=='D')
+            scanf("%d", &cur->discrete);
+        else if (code=='E')
+            scanf("%d", &cur->probability);
+        else
+            printf("wrong code!");
+        cur->total=cur->calculus+cur->discrete+cur->probability+cur->program;
+    }
+    return first;
+}
+struct student* edit(struct student* first)
+{
+    char code;
+    printf("(N)AME or (I)D?");
+    code=getchar();
+    getchar();
+    switch(code)
+    {
+    case 'N':
+        first=change_by_name(first);
+        break;
+    case 'I':
+        first=change_by_id(first);
+        break;
+    default:
+        printf("try again\n");
+
+    }
+    return first;
+}
+
+int over_write_file(struct student * first)
+{
+    struct student  * student;
+    FILE * fp;
+    int count;
+
+    if((fp=fopen("score.txt","w"))==NULL)
+    {
+        printf("cannot open file\n");
+        exit(1);
+    }
+
+    count=0;
+    student=first;
+    while(student != NULL)
+    {
+        fprintf(fp, "Name:%s\tID:%s\tCalculus:%d\tProgram:%d\tDiscrete:%d\tProbability:%d\tTotal:%d\n", student->name, student->id ,student->calculus, student->program, student->discrete, student->probability, student->total);
+        count++;
+        student = student->next;
+    }
+    printf("\nTotal student : %d\n", count);
+
+    fclose(fp);
+
+    return 0;
+}
+
+int save_as_new_file(struct student * first, char * file_name)
+{
+    struct student * student;
+    FILE * fp;
+    int count;
+
+    if((fp=fopen(file_name,"w"))==NULL)
+    {
+        printf("cannot open file : %s\n", file_name);
+        exit(1);
+    }
+
+    count=0;
+    student=first;
+    while(student != NULL)
+    {
+        fprintf(fp, "Name:%s\tID:%s\tCalculus:%d\tProgram:%d\tDiscrete:%d\tProbability:%d\tTotal:%d\n", student->name, student->id,student->calculus, student->program, student->discrete, student->probability,student->total);
+        count++;
+        student = student->next;
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+int data_file(struct student * first)
+{
+    char code;
+    char file_name[255];
+
+    printf("(O)verwrite old file\n(S)ave as new file\n(C)ancle all modified and Exit\nEnter operation code:");
+    code=getchar();
+    switch(code)
+    {
+    case 'O':
+        over_write_file(first);
+        break;
+    case 'S':
+        getchar();
+        printf("\nPlease enter new FileName:");
+        gets(file_name);
+        save_as_new_file(first, file_name);
+        break;
+    case 'C':
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+
+int free_node(struct student * first)
+{
+    struct student * student;
+
+    student=first;
+    while(student != NULL)
+    {
+        free(student);
+        student = student->next;
+    }
+
+    return 0;
+}
+
+
+int main()
+{
+    char code;
+    int count;
+    struct student *first = NULL ;
+    first=read(&count);
+    for(;;)
+    {
+        code=0;
+        printf("(A)list\n(B)insert\n(C)delete\n(D)sort\n(E)edit\n(F)exit\nEnter operation code:");
+        scanf("%c", &code);
+        getchar();
+        switch (code)
+        {
+        case 'A':
+            list(first);
+            break;
+        case 'B':
+            first=insert(first);
+            break;
+        case 'C':
+            first=delete_node(first);
+            break;
+        case 'D':
+            break;
+        case 'E':
+            first=edit(first);
+            break;
+        case 'F':
+            data_file(first);
+            printf("FreeAll memory and Exit\n");
+            free_node(first);
+            return 0;
+        default:
+            printf("Illegal code\n");
+            break;
+        }
+        printf("\n");
+
+    }
+
+}
