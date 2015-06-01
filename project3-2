@@ -1,0 +1,981 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdbool.h>
+
+typedef struct Report
+{
+    char *name;
+    char *id;
+    int calculus;
+    int program;
+    int discrete;
+    int probability;
+    int total;
+    struct Report *next;
+
+} report;
+
+char *read_line(char* str,int n,FILE* fp)
+{
+    int i=0;
+    char ch;
+
+    if (fp!=NULL)
+    {
+        while ((ch=fgetc(fp))!='\n' && ch!=EOF)
+        {
+            if (i<n)
+                str[i++]=ch;
+
+            if (i==n)
+            {
+                str=realloc(str,n*2);
+                n*=2;
+            }
+        }
+    }
+
+    if (fp==NULL)
+    {
+        while ((ch=getchar())!='\n')
+        {
+            if (i<n)
+                str[i++]=ch;
+
+            if (i==n)
+            {
+                str=realloc(str,n*2);
+                n*=2;
+            }
+        }
+    }
+
+    str[i]='\0';
+    return str;
+}
+
+report *add_to_tail(report *last,report *new_node)
+{
+    last->next=new_node;
+    new_node->next=NULL;
+
+    return new_node;
+}
+
+report *set_properties(report *new_node,char *str,int i)
+{
+    int len=strlen(str),n;
+
+    if (i==2)
+    {
+        n=10;
+        while (len>=n)
+            n*=2;
+
+        new_node->name=calloc(n,1);
+        strncpy(new_node->name,str,len);
+    }
+
+    if (i==4)
+    {
+        n=10;
+        while (len>=n)
+            n*=2;
+
+        new_node->id=calloc(n,1);
+        strncpy(new_node->id,str,len);
+    }
+
+    if (i==6)
+        new_node->calculus=atoi(str);
+
+    if (i==8)
+        new_node->program=atoi(str);
+
+    if (i==10)
+        new_node->discrete=atoi(str);
+
+    if (i==12)
+        new_node->probability=atoi(str);
+
+    if (i==14)
+        new_node->total=atoi(str);
+
+    return new_node;
+
+}
+
+report *linear_search(report *first,char *str,int flag) /*flag=1為找ID,flag=0為找Name*/
+{
+    report *i=malloc(sizeof(report));
+    if (flag==0)
+    {
+        char *tmp;
+        for (i=first; i!=NULL; i=i->next)
+        {
+            tmp=malloc(strlen(i->name));
+            strcpy(tmp,i->name);
+            strupr(tmp);
+            if (strcmp(tmp,str)==0)break;
+        }
+    }
+    if (flag==1)
+    {
+        for (i=first; i!=NULL; i=i->next)
+        {
+            if (strcmp(i->id,str)==0)break;
+        }
+    }
+
+    return i;
+}
+
+void list(report *first)
+{
+    report *i;
+
+    printf("\n%5s%14s%17s%9s%11s%12s%7s\n=============================================================================\n","Name","ID","Calculus","Program","Discrete","Probability","Total");
+    for (i=first; i!=NULL; i=i->next)
+    {
+        printf("%-14s",i->name);
+        printf("%9s",i->id);
+        printf("%10d",i->calculus);
+        printf("%10d",i->program);
+        printf("%10d",i->discrete);
+        printf("%10d",i->probability);
+        printf("%11d",i->total);
+        printf("\n");
+    }
+    printf("=============================================================================\n%5s%14s%17s%9s%11s%12s%7s\n\n","Name","ID","Calculus","Program","Discrete","Probability","Total");
+    return;
+}
+
+bool error_proof(char *str,int len,int flag,int num) /*flag=0為Name防呆 1為ID防呆 2為數字防呆 3為選項防呆 num=選項個數*/
+{
+    int i;
+    if (len==0)
+        return false;
+    if (flag==0)
+    {
+        char *tmp=malloc(len);
+        strcpy(tmp,str);
+        strupr(tmp);
+        for (i=0; i<len; i++)
+        {
+            if (tmp[i]<'A' || tmp[i]>'Z')
+                return false;
+        }
+    }
+
+    if (flag==1)
+    {
+        for (i=0; i<len; i++)
+        {
+            if (str[i]<'0' || str[i]>'9')
+                return false;
+        }
+    }
+
+    if (flag==2)
+    {
+        for (i=0; i<len; i++)
+        {
+            if (str[i]<'0' || str[i]>'9')
+                return false;
+        }
+
+        int tmp=atoi(str);
+
+        if (tmp>100)
+            return false;
+    }
+
+    if (flag==3)
+    {
+        if (len!=1)
+            return false;
+        strupr(str);
+        char ch=str[0];
+        if (ch<'A' || ch>'A'+num)
+            return false;
+    }
+
+    return true;
+}
+
+report *insert(report *first,report *last)
+{
+    char *inp=malloc(10);
+    report *new_node=malloc(sizeof(report));
+
+    int len;
+
+    printf("請輸入Name:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+        char *tmp=malloc(len);
+        strcpy(tmp,inp);
+        strupr(tmp);
+
+        if (error_proof(inp,len,0,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        report *err=linear_search(first,tmp,0);
+        if (err==NULL)break;
+
+        else
+            printf("已存在相同資料,請重新輸入:");
+    }
+    set_properties(new_node,inp,2);
+
+    printf("請輸入ID:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+
+        if (error_proof(inp,len,1,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        report *err=linear_search(first,inp,1);
+        if (err==NULL)break;
+        else
+            printf("已存在相同資料,請重新輸入:");
+
+    }
+    set_properties(new_node,inp,4);
+
+    printf("請輸入Calculus成績:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+
+        if (error_proof(inp,len,2,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        else
+            break;
+    }
+    set_properties(new_node,inp,6);
+
+    printf("請輸入Program成績:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+
+        if (error_proof(inp,len,2,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        else
+            break;
+    }
+    set_properties(new_node,inp,8);
+
+    printf("請輸入Discrete成績:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+
+        if (error_proof(inp,len,2,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        else
+            break;
+    }
+    set_properties(new_node,inp,10);
+
+    printf("請輸入Probability成績:");
+    while (1)
+    {
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+
+        if (error_proof(inp,len,2,0)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        else
+            break;
+    }
+    set_properties(new_node,inp,12);
+
+    new_node->total=new_node->calculus+new_node->program+new_node->discrete+new_node->probability;
+    last=add_to_tail(last,new_node);
+    printf("\n");
+
+    return last;
+
+}
+
+void delete_node(report *first)
+{
+    char *inp=malloc(10);
+    bool id,name;
+    int len,i;
+    report *cur,*prev;
+
+    printf("請輸入欲刪除的資料(Name or ID):");
+    while (1)
+    {
+        id=true;
+        name=true;
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+        char *tmp_inp=malloc(len);
+        strcpy(tmp_inp,inp);
+        strupr(tmp_inp);
+
+        for(i=0; i<len; i++)
+        {
+            if (tmp_inp[i]<'0' || tmp_inp[i]>'9')
+            {
+                id=false;
+                break;
+            }
+        }
+
+        for(i=0; i<len; i++)
+        {
+            if (tmp_inp[i]<'A' || tmp_inp[i]>'Z')
+            {
+                name=false;
+                break;
+            }
+        }
+
+        if (name==false && id==false)
+        {
+            printf("格式不符,請重新輸入:");
+            continue;
+        }
+
+        if (name==true)
+        {
+            char *tmp_cur;
+            for (cur=first,prev=NULL; cur!=NULL; prev=cur,cur=cur->next)
+            {
+                tmp_cur=malloc(len);
+                strcpy(tmp_cur,cur->name);
+                strupr(tmp_cur);
+
+                if (strcmp(tmp_cur,tmp_inp)==0)
+                    break;
+            }
+
+            if (prev==NULL)
+            {
+                printf("\n已刪除姓名為%s的資料\n",first->name);
+                first=first->next;
+                break;
+            }
+            if (cur!=NULL)
+            {
+                printf("\n已刪除姓名為%s的資料\n",cur->name);
+                prev->next=cur->next;
+                break;
+            }
+            if (cur==NULL)
+            {
+                printf("找不到欲刪除的資料,請重新輸入:");
+                continue;
+            }
+
+        }
+
+        if (id==true)
+        {
+            for (cur=first,prev=NULL; cur!=NULL; prev=cur,cur=cur->next)
+            {
+                if (strcmp(cur->id,inp)==0)
+                    break;
+            }
+
+            if (prev==NULL)
+            {
+                printf("\n已刪除學號為%s的資料\n",first->id);
+                first=first->next;
+                break;
+            }
+            if (cur!=NULL)
+            {
+                printf("\n已刪除學號為%s的資料\n",cur->id);
+                prev->next=cur->next;
+                break;
+            }
+            if (cur==NULL)
+            {
+                printf("找不到欲刪除的資料,請重新輸入:");
+                continue;
+            }
+        }
+
+    }
+    free(cur);
+    printf("\n");
+}
+
+int child_int (char choice,report *x)
+{
+    switch (choice)
+    {
+    case 'C':
+        return x->calculus;
+        break;
+    case 'D':
+        return x->program;
+        break;
+    case 'E':
+        return x->discrete;
+        break;
+    case 'F':
+        return x->probability;
+        break;
+    case 'G':
+        return x->total;
+        break;
+    }
+
+    return 0;
+}
+
+char* child_char (char choice,report *x)
+{
+    switch (choice)
+    {
+    case 'A':
+        return x->name;
+        break;
+    case 'B':
+        return x->id;
+        break;
+    }
+    return NULL;
+}
+
+bool int_or_char(char choice)
+{
+    if (choice=='A' || choice=='B')
+        return true;
+    else
+        return false;
+}
+
+report *merge(report *a,report *b,char choice)
+{
+
+    if (!a)
+        return b;
+    if (!b)
+        return a;
+
+    report *rlt=NULL;
+    if (int_or_char(choice)==true)
+    {
+        char *na=child_char(choice,a);
+        char *nb=child_char(choice,b);
+        if (strcmp(na,nb)<=0)
+        {
+            rlt=a;
+            rlt->next=merge(a->next,b,choice);
+        }
+        else
+        {
+            rlt=b;
+            rlt->next=merge(a,b->next,choice);
+        }
+    }
+
+    if (int_or_char(choice)==false)
+    {
+        int na=child_int(choice,a);
+        int nb=child_int(choice,b);
+        if (na>nb)
+        {
+            rlt=a;
+            rlt->next=merge(a->next,b,choice);
+        }
+        else
+        {
+            rlt=b;
+            rlt->next=merge(a,b->next,choice);
+        }
+    }
+
+    return rlt;
+
+}
+
+report *split(report *first)
+{
+    report *fast=first;
+    report *slow=first;
+
+    while (fast->next && fast->next->next)
+    {
+        fast=fast->next->next;
+        slow=slow->next;
+    }
+
+    report *tmp=slow->next;
+    slow->next=NULL;
+
+    return tmp;
+
+}
+
+report *merge_sort(report *first,char choice)
+{
+    if (!first || !first->next)
+        return first;
+
+    report *second=split(first);
+    first=merge_sort(first,choice);
+    second=merge_sort(second,choice);
+
+    return merge(first,second,choice);
+
+}
+
+void edit (report *cur)
+{
+    while (1)
+    {
+        char *choice=malloc(10);
+        printf("\n你要修改什麼?\n(A)Name\n(B)ID\n(C)Calculus\n(D)Program\n(E)Discrete\n(F)Probability\n(G)結束修改\n");
+        while (1)
+        {
+            choice=read_line(choice,10,NULL);
+            int len=strlen(choice);
+            if (error_proof(choice,len,3,6)==true)
+                break;
+
+            else
+            {
+                printf("輸入錯誤,請重新輸入:\n");
+                continue;
+            }
+        }
+        char ch=choice[0];
+        char *inp=malloc(10);
+
+        while(1)
+        {
+            if (ch=='A')
+            {
+                printf("Name:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),0,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,2);
+                    break;
+                }
+            }
+
+            if (ch=='B')
+            {
+                printf("ID:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),1,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,4);
+                    break;
+                }
+            }
+
+            if (ch=='C')
+            {
+                printf("Calculus:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),2,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,6);
+                    break;
+                }
+            }
+            if (ch=='D')
+            {
+                printf("Program:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),2,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,8);
+                    break;
+                }
+            }
+            if (ch=='E')
+            {
+                printf("Discrete:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),2,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,10);
+                    break;
+                }
+            }
+            if (ch=='F')
+            {
+                printf("Probability:");
+                inp=read_line(inp,10,NULL);
+                if (error_proof(inp,strlen(inp),2,0)==false)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+                else
+                {
+                    set_properties(cur,inp,12);
+                    break;
+                }
+            }
+            if (ch=='G')
+            {
+                cur->total=cur->calculus+cur->program+cur->discrete+cur->probability;
+                return;
+            }
+        }
+    }
+}
+
+void edit_prev (report *first)
+{
+    bool id,name;
+    int len,i;
+    report *cur;
+    char *inp=malloc(10);
+
+    printf("請輸入欲修改的資料(ID or Name):");
+    while (1)
+    {
+        id=true;
+        name=true;
+        inp=read_line(inp,10,NULL);
+        len=strlen(inp);
+        char *tmp_inp=malloc(len);
+        strcpy(tmp_inp,inp);
+        strupr(tmp_inp);
+
+        for(i=0; i<len; i++)
+        {
+            if (tmp_inp[i]<'0' || tmp_inp[i]>'9')
+            {
+                id=false;
+                break;
+            }
+        }
+
+        for(i=0; i<len; i++)
+        {
+            if (tmp_inp[i]<'A' || tmp_inp[i]>'Z')
+            {
+                name=false;
+                break;
+            }
+        }
+
+        if (name==false && id==false)
+        {
+            printf("格式不符,請重新輸入:");
+            continue;
+        }
+
+        if (name==true)
+        {
+            char *tmp_cur;
+            for (cur=first; cur!=NULL; cur=cur->next)
+            {
+                tmp_cur=malloc(len);
+                strcpy(tmp_cur,cur->name);
+                strupr(tmp_cur);
+
+                if (strcmp(tmp_cur,tmp_inp)==0)
+                    break;
+            }
+
+            if (cur==NULL)
+            {
+                printf("查無資料,請重新輸入:");
+                continue;
+            }
+
+            else
+            {
+                edit(cur);
+                return;
+            }
+
+        }
+
+        if (id==true)
+        {
+            for (cur=first; cur!=NULL; cur=cur->next)
+            {
+                if (strcmp(cur->id,inp)==0)
+                    break;
+            }
+
+            if (cur==NULL)
+            {
+                printf("查無資料,請重新輸入:");
+                continue;
+            }
+
+            else
+            {
+                edit(cur);
+                return;
+            }
+        }
+        free(cur);
+    }
+}
+
+void save(report *first)
+{
+    char *choice=malloc(10);
+    FILE *fp;
+    report *i;
+
+    while (1)
+    {
+        choice=read_line(choice,10,NULL);
+        if (error_proof(choice,strlen(choice),3,2)==false)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        char ch=choice[0];
+
+        if (ch=='A')
+        {
+            fp=fopen("input.txt","w");
+            for (i=first; i!=NULL; i=i->next)
+            {
+                fprintf(fp,"Name:%s\tID:%s\tCalculus:%d\tProgram:%d\tDiscrete:%d\tProbability:%d\tTotal:%d\n",i->name,i->id,i->calculus,i->program,i->discrete,i->probability,i->total);
+            }
+            break;
+        }
+
+        if (ch=='B')
+        {
+
+            printf("請輸入檔名:");
+            while (1)
+            {
+                char *inp=malloc(10);
+                inp=read_line(inp,10,NULL);
+
+                if (strlen(inp)==0)
+                {
+                    printf("輸入錯誤,請重新輸入:");
+                    continue;
+                }
+
+                else
+                {
+                    sprintf(inp,"%s.txt",inp);
+                    fp=fopen(inp,"w");
+                    for (i=first; i!=NULL; i=i->next)
+                    {
+                        fprintf(fp,"Name:%s\tID:%s\tCalculus:%d\tProgram:%d\tDiscrete:%d\tProbability:%d\tTotal:%d\n",i->name,i->id,i->calculus,i->program,i->discrete,i->probability,i->total);
+                    }
+
+                    break;
+                }
+
+            }
+            break;
+        }
+
+        if (ch=='C')
+            break;
+    }
+
+    return ;
+}
+
+int main()
+{
+    FILE *fp;
+    char* line=malloc(10);
+    report *first=NULL;
+    report *last=NULL;
+
+    printf("請輸入檔名:");
+    while (1)
+    {
+        line=read_line(line,10,NULL);
+        int len=strlen(line);
+        if (len==0)
+        {
+            printf("輸入錯誤,請重新輸入:");
+            continue;
+        }
+
+        else
+        {
+            printf("\n");
+            sprintf(line,"%s.txt",line);
+            fp=fopen(line,"r");
+            if (fp!=NULL)
+                break;
+            else
+            {
+                printf("找不到檔案,請重新輸入:");
+                continue;
+            }
+
+        }
+
+    }
+
+
+    int i=1;
+    while (1)
+    {
+        report *new_node=malloc(sizeof(report));
+        line=read_line(line,10,fp);
+
+        if (line[0]=='\0')break;
+
+        char *tok=strtok(line,":\t");
+        while (tok!=NULL)
+        {
+            tok=strtok(NULL,":\t");
+            i++;
+
+            if (i%2==0)
+                new_node=set_properties(new_node,tok,i);
+        }
+
+        if (first==NULL)
+            first=new_node;
+
+        if (last==NULL)
+            last=first;
+
+        last=add_to_tail(last,new_node);
+
+        i=1;
+    }
+    free(line);
+    fclose(fp);
+
+    while(1)
+    {
+        char* choice=malloc(10);
+        printf("請輸入指令:\n(A)list\n(B)insert\n(C)delete\n(D)sort\n(E)edit\n(F)exit\n");
+        while (1)
+        {
+            choice=read_line(choice,10,NULL);
+
+            if (strlen(choice)==1 && (('a'<=choice[0] && choice[0]<='f') || ('A'<=choice[0] && choice[0]<='F')))
+                break;
+
+            else
+            {
+                printf("輸入錯誤,請重新輸入:\n");
+                continue;
+            }
+        }
+        char ch=choice[0];
+        free(choice);
+
+        if (islower(ch))
+            ch=ch-'a'+'A';
+
+        if (ch=='A')
+            list(first);
+
+        if (ch=='B')
+            last=insert(first,last);
+
+        if (ch=='C')
+            delete_node(first);
+
+        if (ch=='D')
+        {
+            printf("請選擇排序方式:\n(A)Name\n(B)ID\n(C)Calculus\n(D)Program\n(E)Discrete\n(F)Probability\n(G)Total\n");
+            while (1)
+            {
+                choice=read_line(choice,10,NULL);
+                strupr(choice);
+                if (strlen(choice)==1 && ('A'<=choice[0] && choice[0]<='G'))
+                    break;
+
+                else
+                {
+                    printf("輸入錯誤,請重新輸入:\n");
+                    continue;
+                }
+            }
+            ch=choice[0];
+
+            first=merge_sort(first,ch);
+            report *cur;
+            for (cur=first; cur!=NULL; cur=cur->next)
+                last=cur;
+            printf("\n排序完成\n\n");
+        }
+
+        if (ch=='E')
+            edit_prev(first);
+
+        if (ch=='F')
+        {
+            printf("請選擇存檔方式:\n(A)覆寫舊檔\n(B)另存新檔\n(C)不存檔\n");
+            save(first);
+            break;
+        }
+    }
+    return 0;
+}
